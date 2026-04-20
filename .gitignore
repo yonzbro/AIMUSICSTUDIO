@@ -1,0 +1,41 @@
+# ── Python / Environments ──────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+.venv/
+env/
+.env
+
+# ── General Output Folders & Media ─────
+outputs/
+**/outputs/
+*.wav
+*.mp3
+*.flac
+*.m4a
+*.ogg
+
+# ── IDE & OS Files ───────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# ── Flutter / Mobile App ─────────────────
+mobile-app/.dart_tool/
+mobile-app/.flutter-plugins
+mobile-app/.flutter-plugins-dependencies
+mobile-app/.pub-cache/
+mobile-app/.pub/
+mobile-app/build/
+mobile-app/*.iml
+mobile-app/ios/Pods/
+mobile-app/ios/.symlinks/
+mobile-app/ios/Flutter/Flutter.framework
+mobile-app/ios/Flutter/Flutter.podspec
+mobile-app/android/local.properties
+mobile-app/android/key.properties
+mobile-app/android/.gradle/

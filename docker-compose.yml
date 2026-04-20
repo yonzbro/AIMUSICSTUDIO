@@ -1,0 +1,108 @@
+
+services:
+
+  # ─── API Gateway ────────────────────────────────────────────────
+  gateway:
+    build: ./gateway
+    ports:
+      - "8000:8000"
+    volumes:
+      - shared_audio:/app/outputs
+    environment:
+      - LYRICS_SERVICE_URL=http://lyrics-service:8001
+      - MUSIC_SERVICE_URL=http://music-service:8002
+      - VOICE_SERVICE_URL=http://voice-service:8003
+      - CLONE_SERVICE_URL=http://clone-service:8004
+      - REMIX_SERVICE_URL=http://remix-service:8005
+    depends_on:
+      lyrics-service:
+        condition: service_healthy
+      music-service:
+        condition: service_healthy
+      voice-service:
+        condition: service_healthy
+      clone-service:
+        condition: service_healthy
+      remix-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─── Lyrics Service (Qwen2 LLM) ────────────────────────────────
+  lyrics-service:
+    build: ./services/lyrics-service
+    ports:
+      - "8001:8001"
+    volumes:
+      - huggingface_cache:/root/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/docs')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  # ─── Music Service (MusicGen) ───────────────────────────────────
+  music-service:
+    build: ./services/music-service
+    ports:
+      - "8002:8002"
+    volumes:
+      - shared_audio:/app/outputs
+      - huggingface_cache:/root/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/docs')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
+  # ─── Voice Service (gTTS) ───────────────────────────────────────
+  voice-service:
+    build: ./services/voice-service
+    ports:
+      - "8003:8003"
+    volumes:
+      - shared_audio:/app/outputs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/docs')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ─── Clone Service (Voice Profile) ─────────────────────────────
+  clone-service:
+    build: ./services/clone-service
+    ports:
+      - "8004:8004"
+    volumes:
+      - shared_audio:/app/outputs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/docs')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ─── Remix Service (Demucs Stem Separation) ────────────────────
+  remix-service:
+    build: ./services/remix-service
+    ports:
+      - "8005:8005"
+    volumes:
+      - shared_audio:/app/outputs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8005/docs')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+volumes:
+  shared_audio:
+  huggingface_cache:
