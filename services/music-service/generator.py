@@ -2,6 +2,7 @@ import uuid
 import os
 import scipy.io.wavfile
 import torch
+import gc
 from model_loader import get_model_loader
 
 # In Docker, use the shared volume path; locally fallback to local outputs
@@ -33,7 +34,7 @@ class MusicGenerator:
             audio_values = model.generate(**inputs, max_new_tokens=max_new_tokens)
             
         # audio_values shape: (batch_size, num_channels, sequence_length)
-        audio = audio_values[0, 0].cpu().numpy()
+        audio = audio_values[0, 0].to(torch.float32).cpu().numpy()
         sampling_rate = model.config.audio_encoder.sampling_rate
         
         # Generate filename
@@ -42,5 +43,11 @@ class MusicGenerator:
         
         # Save as WAV
         scipy.io.wavfile.write(filepath, rate=sampling_rate, data=audio)
+        
+        # Clean up VRAM
+        del audio_values
+        del audio
+        torch.cuda.empty_cache()
+        gc.collect()
         
         return filename

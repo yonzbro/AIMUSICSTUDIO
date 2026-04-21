@@ -87,19 +87,26 @@ async def load_service_model(service_name: str):
     # 10 minutes timeout for model loading
     async with httpx.AsyncClient(timeout=600.0) as client:
         try:
-            resp = await client.post(f"{url}/load-model")
+            resp = await client.post(f"{SERVICES[service_name]}/load-model")
             return resp.json()
         except Exception as e:
             return {"error": str(e)}
 
 # ── FFmpeg Merge (async) ─────────────────────────────────────────
 async def _merge_audio(voice_path: str, music_path: str, output_path: str) -> None:
+    # We apply studio effects (echo/reverb) to vocals and loop the music to match duration
     process = await asyncio.create_subprocess_exec(
         "ffmpeg", "-y",
         "-i", voice_path,
-        "-i", music_path,
-        "-filter_complex", "[0:a][1:a]amix=inputs=2:duration=longest:normalize=0",
-        "-ar", "22050",
+        "-stream_loop", "-1", "-i", music_path,
+        "-filter_complex", 
+        # [0:a] is vocal: add echo for studio feel
+        # [1:a] is music: loop it and mix
+        "[0:a]aecho=0.8:0.88:60:0.4[v];"
+        "[1:a]volume=0.8[m];"
+        "[v][m]amix=inputs=2:duration=shortest:dropout_transition=0",
+        "-c:a", "libmp3lame",
+        "-b:a", "192k",
         output_path,
         stdout=asyncio.subprocess.DEVNULL,
         stderr=asyncio.subprocess.DEVNULL,
@@ -178,19 +185,19 @@ async def generate_song(request: PipelineRequest):
         if music_file and voice_file:
             music_path = f"{OUTPUT_DIR}/{os.path.basename(music_file)}"
             voice_path = f"{OUTPUT_DIR}/{os.path.basename(voice_file)}"
-            final_song = f"final_{prompt_hash}.wav"
+            final_song = f"final_{prompt_hash}.mp3"
             final_path = f"{OUTPUT_DIR}/{final_song}"
 
             try:
                 await _merge_audio(voice_path, music_path, final_path)
-                print(f"Merged: {final_song}")
             except Exception as e:
-                print(f"Merge failed: {e}")
-                final_song = os.path.basename(voice_file) if voice_file else os.path.basename(music_file)
+                return {"status": "error", "message": f"Audio merge failed: {str(e)}"}
         elif music_file:
             final_song = os.path.basename(music_file)
         elif voice_file:
             final_song = os.path.basename(voice_file)
+        else:
+            return {"status": "error", "message": "Failed to generate any audio component (music/voice)."}
 
     return {
         "status": "success",
@@ -198,7 +205,7 @@ async def generate_song(request: PipelineRequest):
         "lyrics": lyrics,
         "music_file": music_file,
         "voice_file": voice_file,
-        "final_song": final_song,
+        "final_song": os.path.basename(final_song) if final_song else "",
     }
 
 # ── Remix Endpoint (proxy to remix-service) ──────────────────────

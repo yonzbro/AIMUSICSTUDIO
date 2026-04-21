@@ -8,7 +8,13 @@
 
 ## 🚀 Overview
 
-**Antigravity AI Music Studio** is a state-of-the-art, AI-powered music generation ecosystem. It leverages a microservices architecture to handle complex AI tasks like lyrics generation, music synthesis, voice cloning, and audio remixing, all orchestrated through a high-performance FastAPI gateway and accessible via a sleek Flutter mobile application.
+**Antigravity AI Music Studio** is a state-of-the-art, AI-powered music generation ecosystem. It leverages a microservices architecture to handle lyrics generation, music synthesis, voice cloning, and audio remixing, all orchestrated through a high-performance FastAPI gateway and accessible via a sleek Flutter mobile application.
+
+### ✨ Latest Enhancements (v1.1)
+- **Studio Mastering**: Vocals now include professional `aecho` and `reverb` filters for a high-fidelity studio feel.
+- **Infinite Looping**: Background beats now loop seamlessly to match the duration of your lyrics.
+- **Universal MP3 Output**: All generated songs are automatically converted to high-quality MP3 for perfect compatibility with mobile players.
+- **VRAM Memory Guard**: Optimized memory management for stable performance on mid-range GPUs (e.g., RTX 4060).
 
 ### 🏗️ Architecture
 
@@ -34,9 +40,9 @@ graph TD
 ### 🏁 Getting Started
 
 1. **Prerequisites:**
-   - Docker Desktop (v4+)
+   - Docker Desktop (v4+) & NVIDIA Container Toolkit
    - Flutter SDK (v3.0+)
-   - NVIDIA GPU (Optional, for acceleration)
+   - Android Emulator/Device (API 28+ recommended)
 
 2. **Run Backend:**
    ```powershell
@@ -46,9 +52,11 @@ graph TD
 3. **Run Mobile App:**
    ```powershell
    cd mobile-app
-   flutter pub get
    flutter run
    ```
+
+> [!IMPORTANT]
+> **Android Configuration:** Ensure `android:usesCleartextTraffic="true"` is enabled in `AndroidManifest.xml` to allow audio streaming over HTTP.
 
 </div>
 
@@ -58,11 +66,17 @@ graph TD
 
 ## 🚀 Genel Bakış
 
-**Antigravity AI Music Studio**, yapay zeka destekli son teknoloji bir müzik üretim ekosistemidir. Şarkı sözü yazımı, müzik sentezi, ses klonlama ve ses ayrıştırma gibi karmaşık görevleri mikro servis mimarisiyle yönetir. Tüm süreç yüksek performanslı bir FastAPI gateway üzerinden orkestre edilir ve modern bir Flutter mobil uygulaması ile kullanıcıya sunulur.
+**Antigravity AI Music Studio**, yapay zeka destekli son teknoloji bir müzik üretim ekosistemidir. Şarkı sözü yazımı, müzik sentezi, ses klonlama ve ses ayrıştırma görevlerini mikro servis mimarisiyle yönetir. Tüm süreç yüksek performanslı bir FastAPI gateway üzerinden yönetilir ve modern bir Flutter mobil uygulaması ile sunulur.
+
+### ✨ Yeni Geliştirmeler (v1.1)
+- **Stüdyo Mastering**: Vokaller artık yüksek kaliteli bir stüdyo hissi için profesyonel `aecho` ve `reverb` filtreleri içerir.
+- **Sonsuz Döngü**: Arka plan beatleri, sözlerinizin süresiyle eşleşecek şekilde kusursuzca döngüye (loop) sokulur.
+- **Evrensel MP3 Çıkışı**: Üretilen tüm şarkılar, mobil oynatıcılarla tam uyum için otomatik olarak yüksek kaliteli MP3 formatına dönüştürülür.
+- **VRAM Hafıza Koruması**: RTX 4060 gibi orta segment GPU'larda kararlı performans için optimize edilmiş bellek yönetimi.
 
 ### 🏗️ Mimari Yapı
 
-Mistem, her biri belirli bir AI görevinden sorumlu olan bağımsız Docker konteynırlarından oluşur. Bu yapı, ölçeklenebilirlik ve GPU kaynaklarının verimli kullanılmasını sağlar.
+Sistem, her biri belirli bir AI görevinden sorumlu olan bağımsız Docker konteynırlarından oluşur. Bu yapı, ölçeklenebilirlik ve GPU kaynaklarının verimli kullanılmasını sağlar.
 
 ### 🛠️ Teknoloji Yığını
 - **Backend:** Python, FastAPI, Docker, Docker Compose
@@ -71,14 +85,13 @@ Mistem, her biri belirli bir AI görevinden sorumlu olan bağımsız Docker kont
   - `Qwen2-1.5B-Instruct` (Söz Yazımı)
   - `facebook/musicgen-small` (Müzik Üretimi)
   - `Demucs` (Stem Ayrıştırma)
-- **GPU Hızlandırma:** NVIDIA Container Toolkit ile CUDA desteği.
 
 ### 🏁 Başlangıç
 
 1. **Gereksinimler:**
-   - Docker Desktop (v4+)
+   - Docker Desktop & NVIDIA Container Toolkit
    - Flutter SDK (v3.0+)
-   - NVIDIA GPU (Hızlandırma için opsiyonel)
+   - Android Emülatör/Cihaz (API 28+ önerilir)
 
 2. **Backend'i Başlat:**
    ```powershell
@@ -88,9 +101,11 @@ Mistem, her biri belirli bir AI görevinden sorumlu olan bağımsız Docker kont
 3. **Mobil Uygulamayı Çalıştır:**
    ```powershell
    cd mobile-app
-   flutter pub get
    flutter run
    ```
+
+> [!IMPORTANT]
+> **Android Yapılandırması:** Ses akışının HTTP üzerinden sorunsuz çalışması için `AndroidManifest.xml` dosyasında `android:usesCleartextTraffic="true"` ayarının yapıldığından emin olun.
 
 </div>
 
