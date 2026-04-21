@@ -5,6 +5,9 @@ from pathlib import Path
 
 _ready = False
 
+def is_model_loaded() -> bool:
+    return _ready
+
 def load_model():
     global _ready
     _ready = True
@@ -12,6 +15,10 @@ def load_model():
 
 def split_audio(audio_path: str, output_dir: str):
     """Split audio into stems using Demucs htdemucs model."""
+    global _ready
+    if not _ready:
+        load_model()
+
     from demucs.api import Separator
     from demucs.audio import save_audio
 

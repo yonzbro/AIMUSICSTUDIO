@@ -1,79 +1,111 @@
 # 🎵 Antigravity AI Music Studio
 
-AI destekli müzik üretim sistemi — Docker mikro servis mimarisi + Flutter mobil uygulama.
+[Türkçe](#türkçe) | [English](#english)
 
-## 🏗️ Mimari
+---
 
-```
-mobile-app (Flutter)
-    │
-    └──► Gateway :8000  (FastAPI — orkestrasyon)
-              ├──► lyrics-service :8001   (Qwen2-1.5B — söz yazımı)
-              ├──► music-service  :8002   (MusicGen-Small — müzik üretimi)
-              ├──► voice-service  :8003   (gTTS — ses sentezi)
-              ├──► clone-service  :8004   (Ses profili — stub)
-              └──► remix-service  :8005   (Demucs — stem ayrımı)
-```
+<div id="english">
 
-## 🚀 Başlatma
+## 🚀 Overview
 
-### 1. Gereksinimler
-- Docker Desktop (v4+) — çalışıyor olmalı
-- Flutter SDK (3.0+)
-- Android emülatör veya fiziksel cihaz
+**Antigravity AI Music Studio** is a state-of-the-art, AI-powered music generation ecosystem. It leverages a microservices architecture to handle complex AI tasks like lyrics generation, music synthesis, voice cloning, and audio remixing, all orchestrated through a high-performance FastAPI gateway and accessible via a sleek Flutter mobile application.
 
-### 2. Backend'i başlat (ilk seferde build ~10-20 dk sürer)
-```powershell
-cd C:\Users\YUNUS\Desktop\AIMUSICSTUDIO
-docker-compose up --build -d
+### 🏗️ Architecture
+
+```mermaid
+graph TD
+    App[Flutter Mobile App] --> Gateway[FastAPI Gateway :8000]
+    Gateway --> Lyrics[Lyrics Service :8001<br/>Qwen2-1.5B]
+    Gateway --> Music[Music Service :8002<br/>MusicGen-Small]
+    Gateway --> Voice[Voice Service :8003<br/>gTTS/Edge]
+    Gateway --> Clone[Clone Service :8004<br/>Voice Cloning]
+    Gateway --> Remix[Remix Service :8005<br/>Demucs Stem Separation]
 ```
 
-### 3. Servislerin hazır olduğunu doğrula
-```powershell
-docker-compose ps
-# Veya her servisin docs sayfasını kontrol et:
-# http://localhost:8000/docs  ← Gateway
-# http://localhost:8001/docs  ← Lyrics
-# http://localhost:8002/docs  ← Music
-# http://localhost:8003/docs  ← Voice
-```
+### 🛠️ Tech Stack
+- **Backend:** Python, FastAPI, Docker, Docker Compose
+- **Mobile:** Flutter (Dart)
+- **AI Models:** 
+  - `Qwen2-1.5B-Instruct` (Lyrics)
+  - `facebook/musicgen-small` (Music)
+  - `Demucs` (Remix/Stems)
+- **GPU Acceleration:** CUDA supported via NVIDIA Container Toolkit.
 
-### 4. Flutter uygulamasını başlat
-```powershell
-cd mobile-app
-flutter pub get
-flutter run   # Emülatör veya bağlı cihazda
-```
+### 🏁 Getting Started
 
-> **Not:** Android emülatörde `10.0.2.2` = PC'nin localhost'u.  
-> Fiziksel cihazda `10.0.2.2` yerine PC'nin yerel IP adresini kullan (örn. `192.168.1.5`).
+1. **Prerequisites:**
+   - Docker Desktop (v4+)
+   - Flutter SDK (v3.0+)
+   - NVIDIA GPU (Optional, for acceleration)
 
-## 🛑 Durdurma
-```powershell
-docker-compose down
-```
+2. **Run Backend:**
+   ```powershell
+   docker-compose up --build -d
+   ```
 
-## 📋 Servis Durumlarını İzleme
-```powershell
-docker-compose logs -f            # Tüm servisler
-docker-compose logs -f gateway    # Sadece gateway
-docker-compose logs -f music-service
-```
+3. **Run Mobile App:**
+   ```powershell
+   cd mobile-app
+   flutter pub get
+   flutter run
+   ```
 
-## 🔧 Geliştirme Notları
+</div>
 
-| Servis | Model | GPU | Notlar |
-|--------|-------|-----|--------|
-| lyrics-service | Qwen2-1.5B-Instruct | Opsiyonel | İlk çalıştırmada ~3GB indirir |
-| music-service | facebook/musicgen-small | Opsiyonel | ~800MB, 10 sn müzik |
-| voice-service | gTTS | ❌ | Cloud TTS, internet gerekli |
-| clone-service | Stub | ❌ | Demo mod — gerçek klonlama için OpenVoice gerekli |
-| remix-service | Demucs htdemucs | Opsiyonel | Stem ayrımı |
+---
 
-## 🎮 Kullanım
+<div id="türkçe">
 
-1. Uygulamayı aç
-2. Şarkın hakkında bir prompt yaz (ör. "a lo-fi beat about rainy nights")
-3. Müzik stilini seç
-4. **Generate Song** butonuna bas ve bekle (~30-60 sn)
-5. Oynatıcı ekranında dinle + şarkı sözlerini gör
+## 🚀 Genel Bakış
+
+**Antigravity AI Music Studio**, yapay zeka destekli son teknoloji bir müzik üretim ekosistemidir. Şarkı sözü yazımı, müzik sentezi, ses klonlama ve ses ayrıştırma gibi karmaşık görevleri mikro servis mimarisiyle yönetir. Tüm süreç yüksek performanslı bir FastAPI gateway üzerinden orkestre edilir ve modern bir Flutter mobil uygulaması ile kullanıcıya sunulur.
+
+### 🏗️ Mimari Yapı
+
+Mistem, her biri belirli bir AI görevinden sorumlu olan bağımsız Docker konteynırlarından oluşur. Bu yapı, ölçeklenebilirlik ve GPU kaynaklarının verimli kullanılmasını sağlar.
+
+### 🛠️ Teknoloji Yığını
+- **Backend:** Python, FastAPI, Docker, Docker Compose
+- **Mobil:** Flutter (Dart)
+- **Yapay Zeka Modelleri:** 
+  - `Qwen2-1.5B-Instruct` (Söz Yazımı)
+  - `facebook/musicgen-small` (Müzik Üretimi)
+  - `Demucs` (Stem Ayrıştırma)
+- **GPU Hızlandırma:** NVIDIA Container Toolkit ile CUDA desteği.
+
+### 🏁 Başlangıç
+
+1. **Gereksinimler:**
+   - Docker Desktop (v4+)
+   - Flutter SDK (v3.0+)
+   - NVIDIA GPU (Hızlandırma için opsiyonel)
+
+2. **Backend'i Başlat:**
+   ```powershell
+   docker-compose up --build -d
+   ```
+
+3. **Mobil Uygulamayı Çalıştır:**
+   ```powershell
+   cd mobile-app
+   flutter pub get
+   flutter run
+   ```
+
+</div>
+
+---
+
+## 📋 Service Ports / Servis Portları
+
+| Service / Servis | Port | Documentation / Dokümantasyon |
+| :--- | :---: | :--- |
+| **Gateway** | `8000` | [http://localhost:8000/docs](http://localhost:8000/docs) |
+| **Lyrics Service** | `8001` | [http://localhost:8001/docs](http://localhost:8001/docs) |
+| **Music Service** | `8002` | [http://localhost:8002/docs](http://localhost:8002/docs) |
+| **Voice Service** | `8003` | [http://localhost:8003/docs](http://localhost:8003/docs) |
+| **Clone Service** | `8004` | [http://localhost:8004/docs](http://localhost:8004/docs) |
+| **Remix Service** | `8005` | [http://localhost:8005/docs](http://localhost:8005/docs) |
+
+---
+*Created by Antigravity AI.*

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import '../services/api_service.dart';
 
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key});
@@ -58,10 +59,8 @@ class _PlayerScreenState extends State<PlayerScreen>
       _prompt = args['prompt'] ?? '';
       _style = args['style'] ?? '';
       _lyrics = args['lyrics'] ?? '';
-      if (args['final_song'] != null) {
-        // 10.0.2.2 → localhost for Android emulator
-        _finalSongUrl =
-            'http://10.0.2.2:8000/outputs/${args['final_song']}';
+      if (args['final_song'] != null && args['final_song'].toString().isNotEmpty) {
+        _finalSongUrl = ApiService.audioUrl(args['final_song']);
       }
     }
   }
@@ -128,7 +127,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF7C3AED).withOpacity(0.4),
+                      color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
                       blurRadius: 50,
                       spreadRadius: 10,
                     ),
@@ -180,18 +179,22 @@ class _PlayerScreenState extends State<PlayerScreen>
                 activeTrackColor: const Color(0xFF7C3AED),
                 inactiveTrackColor: const Color(0xFF2D2D4E),
                 thumbColor: const Color(0xFF7C3AED),
-                overlayColor: const Color(0xFF7C3AED30),
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                overlayColor: const Color(0x307C3AED),
+                thumbShape:
+                    const RoundSliderThumbShape(enabledThumbRadius: 6),
                 trackHeight: 3,
               ),
               child: Slider(
                 min: 0,
-                max: _duration.inMilliseconds.toDouble().clamp(1, double.infinity),
+                max: _duration.inMilliseconds
+                    .toDouble()
+                    .clamp(1, double.infinity),
                 value: _position.inMilliseconds
                     .toDouble()
                     .clamp(0, _duration.inMilliseconds.toDouble()),
                 onChanged: (value) {
-                  _audioPlayer.seek(Duration(milliseconds: value.toInt()));
+                  _audioPlayer
+                      .seek(Duration(milliseconds: value.toInt()));
                 },
               ),
             ),
@@ -220,7 +223,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                   icon: const Icon(Icons.replay_10, color: Colors.white60),
                   iconSize: 36,
                   onPressed: () => _audioPlayer.seek(
-                    Duration(seconds: (_position.inSeconds - 10).clamp(0, 9999)),
+                    Duration(
+                        seconds:
+                            (_position.inSeconds - 10).clamp(0, 9999)),
                   ),
                 ),
                 GestureDetector(
@@ -237,7 +242,8 @@ class _PlayerScreenState extends State<PlayerScreen>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF7C3AED).withOpacity(0.5),
+                          color: const Color(0xFF7C3AED)
+                              .withValues(alpha: 0.5),
                           blurRadius: 20,
                           spreadRadius: 2,
                         ),
@@ -254,7 +260,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                   icon: const Icon(Icons.forward_10, color: Colors.white60),
                   iconSize: 36,
                   onPressed: () => _audioPlayer.seek(
-                    Duration(seconds: (_position.inSeconds + 10).clamp(0, _duration.inSeconds)),
+                    Duration(
+                        seconds: (_position.inSeconds + 10)
+                            .clamp(0, _duration.inSeconds)),
                   ),
                 ),
               ],

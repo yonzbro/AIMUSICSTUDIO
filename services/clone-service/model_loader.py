@@ -3,6 +3,9 @@ import os
 
 _loaded = False
 
+def is_model_loaded() -> bool:
+    return _loaded
+
 def load_model():
     """Clone service stub — real implementation requires OpenVoice checkpoints."""
     global _loaded
@@ -15,6 +18,9 @@ def extract_voice_embedding(audio_path: str, profile_id: str):
     Stub implementation: saves a placeholder embedding tensor.
     Real implementation would use OpenVoice se_extractor.get_se().
     """
+    if not _loaded:
+        load_model()
+
     print(f"Processing voice sample: {audio_path}")
 
     output_dir = os.path.dirname(audio_path)

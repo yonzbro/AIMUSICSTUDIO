@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from generator import MusicGenerator
+from model_loader import get_model_loader
 import os
 
 app = FastAPI(title="AI Music Generator API")
@@ -15,10 +16,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "outputs")
+OUTPUT_DIR = os.getenv("OUTPUT_DIR", "/app/outputs")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-
 app.mount("/outputs", StaticFiles(directory=OUTPUT_DIR), name="outputs")
+
+generator = MusicGenerator()
+loader = get_model_loader()
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+@app.get("/model-status")
+async def model_status():
+    return {
+        "loaded": loader._is_loaded,
+        "model_name": "facebook/musicgen-small",
+        "description": "MusicGen for instrumental music generation",
+    }
+
+@app.post("/load-model")
+def trigger_load():
+    loader.load()
+    return {"status": "loaded", "model_name": "facebook/musicgen-small"}
 
 class MusicRequest(BaseModel):
     prompt: str
@@ -26,8 +46,6 @@ class MusicRequest(BaseModel):
 
 class MusicResponse(BaseModel):
     audio_url: str
-
-generator = MusicGenerator()
 
 @app.post("/generate-music", response_model=MusicResponse)
 def generate_music(request: MusicRequest):

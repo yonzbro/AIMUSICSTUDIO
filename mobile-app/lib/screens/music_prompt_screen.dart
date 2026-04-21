@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../services/api_service.dart';
 
 class MusicPromptScreen extends StatefulWidget {
   const MusicPromptScreen({super.key});
@@ -22,9 +21,34 @@ class _MusicPromptScreenState extends State<MusicPromptScreen>
     'Lo-Fi',
     'Ambient',
     'Hip-Hop',
+    'Pop',
+    'R&B',
+    'Jazz',
+    'Classical',
   ];
 
+  // ── Feature toggles ────────────────────────────────────────────
+  final Map<String, bool> _features = {
+    'lyrics': true,
+    'music': true,
+    'voice': true,
+  };
+
+  final Map<String, IconData> _featureIcons = {
+    'lyrics': Icons.text_snippet,
+    'music': Icons.piano,
+    'voice': Icons.record_voice_over,
+  };
+
+  final Map<String, String> _featureLabels = {
+    'lyrics': 'Lyrics',
+    'music': 'Music',
+    'voice': 'Voice',
+  };
+
   bool _isLoading = false;
+  String _loadingStep = '';
+
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
@@ -35,7 +59,7 @@ class _MusicPromptScreenState extends State<MusicPromptScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+    _pulseAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
@@ -47,54 +71,79 @@ class _MusicPromptScreenState extends State<MusicPromptScreen>
     super.dispose();
   }
 
+  List<String> get _activeFeatures =>
+      _features.entries.where((e) => e.value).map((e) => e.key).toList();
+
   Future<void> _generateSong() async {
     if (_promptController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please describe your song first!')),
+        SnackBar(
+          content: const Text('Describe your song first!'),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
       );
       return;
     }
 
-    setState(() => _isLoading = true);
+    if (_activeFeatures.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Enable at least one feature!'),
+          backgroundColor: Colors.amber.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _loadingStep = 'Sending to AI pipeline…';
+    });
 
     try {
-      // 10.0.2.2 is localhost for Android Emulator; use your PC's IP for real device
-      final url = Uri.parse('http://10.0.2.2:8000/generate-song');
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'prompt': _promptController.text,
-          'style': _selectedStyle,
-        }),
-      ).timeout(const Duration(minutes: 5));
+      final data = await ApiService.generateSong(
+        prompt: _promptController.text,
+        style: _selectedStyle,
+        features: _activeFeatures,
+      );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (!mounted) return;
+      if (data != null && mounted) {
         Navigator.pushNamed(context, '/player', arguments: {
           'prompt': _promptController.text,
           'style': _selectedStyle,
           'final_song': data['final_song'],
-          'lyrics': data['lyrics'],
+          'lyrics': data['lyrics'] ?? '',
+          'features_used': data['features_used'] ?? [],
         });
-      } else {
-        if (!mounted) return;
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Server error ${response.statusCode}'),
+            content: const Text('Generation failed. Check backend logs.'),
             backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Connection error: $e'),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -107,34 +156,31 @@ class _MusicPromptScreenState extends State<MusicPromptScreen>
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white70),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text(
-          'Antigravity Studio',
+          'Create Song',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
+            letterSpacing: 0.5,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.mic, color: Colors.deepPurpleAccent),
-            tooltip: 'Clone your voice',
-            onPressed: () => Navigator.pushNamed(context, '/voice_upload'),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── Hero banner ──────────────────────────────────────
+            // ── Animated Icon ─────────────────────────────────────
             Center(
               child: ScaleTransition(
                 scale: _pulseAnimation,
                 child: Container(
-                  width: 120,
-                  height: 120,
+                  width: 90,
+                  height: 90,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: const RadialGradient(
@@ -142,84 +188,118 @@ class _MusicPromptScreenState extends State<MusicPromptScreen>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF7C3AED).withOpacity(0.5),
-                        blurRadius: 40,
-                        spreadRadius: 5,
+                        color: const Color(0xFF7C3AED).withValues(alpha: 0.5),
+                        blurRadius: 30,
+                        spreadRadius: 3,
                       ),
                     ],
                   ),
                   child: const Icon(
-                    Icons.music_note,
-                    size: 56,
+                    Icons.auto_awesome,
+                    size: 40,
                     color: Colors.white,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 32),
-
-            // ── Title ────────────────────────────────────────────
-            const Text(
-              'Create Your Song',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Describe it. We'll compose it.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.white54),
-            ),
-            const SizedBox(height: 32),
-
-            // ── Prompt field ─────────────────────────────────────
-            TextField(
-              controller: _promptController,
-              maxLines: 4,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText:
-                    'e.g. a chill lo-fi beat about late night coding sessions...',
-                hintStyle: const TextStyle(color: Colors.white30),
-                filled: true,
-                fillColor: const Color(0xFF1A1A2E),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Color(0xFF3D2A6E)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Color(0xFF3D2A6E)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide:
-                      const BorderSide(color: Color(0xFF7C3AED), width: 2),
-                ),
-              ),
-            ),
             const SizedBox(height: 20),
 
-            // ── Style dropdown ───────────────────────────────────
+            // ── Title ─────────────────────────────────────────────
             const Text(
-              'Music Style',
+              'Describe your song',
+              textAlign: TextAlign.center,
               style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600),
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
             ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              // FIX: use `value` not `initialValue`
-              value: _selectedStyle,
-              dropdownColor: const Color(0xFF1A1A2E),
+            const SizedBox(height: 4),
+            const Text(
+              'Toggle the AI features you want below',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Colors.white38),
+            ),
+            const SizedBox(height: 24),
+
+            // ── Feature Toggles ───────────────────────────────────
+            Row(
+              children: _features.keys.map((key) {
+                final on = _features[key]!;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () =>
+                        setState(() => _features[key] = !_features[key]!),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: on
+                            ? const Color(0xFF7C3AED).withValues(alpha: 0.18)
+                            : const Color(0xFF1A1A2E),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: on
+                              ? const Color(0xFF7C3AED)
+                              : const Color(0xFF2D2D4E),
+                          width: on ? 2 : 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            _featureIcons[key],
+                            color: on ? const Color(0xFF7C3AED) : Colors.white30,
+                            size: 24,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _featureLabels[key]!,
+                            style: TextStyle(
+                              color: on ? Colors.white : Colors.white30,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            width: 18,
+                            height: 18,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: on
+                                  ? const Color(0xFF7C3AED)
+                                  : Colors.transparent,
+                              border: Border.all(
+                                color: on
+                                    ? const Color(0xFF7C3AED)
+                                    : Colors.white24,
+                                width: 2,
+                              ),
+                            ),
+                            child: on
+                                ? const Icon(Icons.check,
+                                    size: 12, color: Colors.white)
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+
+            // ── Prompt field ──────────────────────────────────────
+            TextField(
+              controller: _promptController,
+              maxLines: 3,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
+                hintText: 'e.g. a dreamy lo-fi beat about late night coding…',
+                hintStyle: const TextStyle(color: Colors.white24),
                 filled: true,
                 fillColor: const Color(0xFF1A1A2E),
                 border: OutlineInputBorder(
@@ -236,21 +316,57 @@ class _MusicPromptScreenState extends State<MusicPromptScreen>
                       const BorderSide(color: Color(0xFF7C3AED), width: 2),
                 ),
               ),
-              items: _styles
-                  .map(
-                    (style) => DropdownMenuItem(
-                      value: style,
-                      child: Text(style),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) setState(() => _selectedStyle = value);
-              },
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 18),
 
-            // ── Generate button ──────────────────────────────────
+            // ── Style chips ───────────────────────────────────────
+            const Text(
+              'STYLE',
+              style: TextStyle(
+                color: Colors.white38,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _styles.map((style) {
+                final sel = style == _selectedStyle;
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedStyle = style),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: sel
+                          ? const Color(0xFF7C3AED)
+                          : const Color(0xFF1A1A2E),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: sel
+                            ? const Color(0xFF7C3AED)
+                            : const Color(0xFF2D2D4E),
+                      ),
+                    ),
+                    child: Text(
+                      style,
+                      style: TextStyle(
+                        color: sel ? Colors.white : Colors.white54,
+                        fontSize: 13,
+                        fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 32),
+
+            // ── Generate button ───────────────────────────────────
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               height: 58,
@@ -269,7 +385,8 @@ class _MusicPromptScreenState extends State<MusicPromptScreen>
                     ? []
                     : [
                         BoxShadow(
-                          color: const Color(0xFF7C3AED).withOpacity(0.5),
+                          color:
+                              const Color(0xFF7C3AED).withValues(alpha: 0.45),
                           blurRadius: 20,
                           offset: const Offset(0, 6),
                         ),
@@ -285,35 +402,35 @@ class _MusicPromptScreenState extends State<MusicPromptScreen>
                   ),
                 ),
                 child: _isLoading
-                    ? const Row(
+                    ? Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          SizedBox(
-                            height: 20,
-                            width: 20,
+                          const SizedBox(
+                            height: 18,
+                            width: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               color: Colors.white,
                             ),
                           ),
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           Text(
-                            'Composing your song…',
-                            style: TextStyle(
-                                fontSize: 16, color: Colors.white70),
+                            _loadingStep,
+                            style: const TextStyle(
+                                fontSize: 14, color: Colors.white70),
                           ),
                         ],
                       )
-                    : const Row(
+                    : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.auto_awesome,
+                          const Icon(Icons.auto_awesome,
                               color: Colors.white, size: 20),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Text(
-                            'Generate Song',
-                            style: TextStyle(
-                              fontSize: 18,
+                            'Generate (${_activeFeatures.length} feature${_activeFeatures.length == 1 ? "" : "s"})',
+                            style: const TextStyle(
+                              fontSize: 16,
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),

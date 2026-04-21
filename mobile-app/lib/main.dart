@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'screens/home_screen.dart';
 import 'screens/music_prompt_screen.dart';
 import 'screens/player_screen.dart';
 import 'screens/voice_upload_screen.dart';
+import 'screens/remix_screen.dart';
 
 void main() {
   runApp(const AntigravityMusicApp());
@@ -21,7 +23,6 @@ class AntigravityMusicApp extends StatelessWidget {
           primary: const Color(0xFF7C3AED),
           secondary: const Color(0xFF4F46E5),
           surface: const Color(0xFF1A1A2E),
-          background: const Color(0xFF0D0D1A),
         ),
         scaffoldBackgroundColor: const Color(0xFF0D0D1A),
         appBarTheme: const AppBarTheme(
@@ -32,9 +33,11 @@ class AntigravityMusicApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const MusicPromptScreen(),
+        '/': (context) => const HomeScreen(),
+        '/create': (context) => const MusicPromptScreen(),
         '/player': (context) => const PlayerScreen(),
         '/voice_upload': (context) => const VoiceUploadScreen(),
+        '/remix': (context) => const RemixScreen(),
       },
     );
   }

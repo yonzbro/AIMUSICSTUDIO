@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:file_picker/file_picker.dart';
+import 'dart:convert';
+import '../services/api_service.dart';
 
 class VoiceUploadScreen extends StatefulWidget {
   const VoiceUploadScreen({super.key});
@@ -12,6 +15,7 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen>
     with SingleTickerProviderStateMixin {
   bool _isUploading = false;
   String? _profileId;
+  String? _selectedFileName;
   String _statusMessage = 'Upload a short voice sample (10–30 sec WAV/MP3)';
 
   late AnimationController _glowController;
@@ -36,16 +40,26 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen>
   }
 
   Future<void> _pickAndUpload() async {
-    // NOTE: file_picker integration — add `file_picker` to pubspec.yaml to enable.
-    // For now, show a coming-soon snackbar.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-            'Voice cloning coming soon! Add file_picker package to enable.'),
-        backgroundColor: Color(0xFF7C3AED),
-        duration: Duration(seconds: 3),
-      ),
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['wav', 'mp3', 'm4a', 'aac'],
+      allowMultiple: false,
     );
+
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.first;
+    if (file.path == null) {
+      setState(() => _statusMessage = 'Could not access file path.');
+      return;
+    }
+
+    setState(() {
+      _selectedFileName = file.name;
+      _statusMessage = 'File selected: ${file.name}';
+    });
+
+    await _uploadFile(file.path!);
   }
 
   Future<void> _uploadFile(String filePath) async {
@@ -55,24 +69,27 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen>
     });
 
     try {
-      final uri = Uri.parse('http://10.0.2.2:8004/clone-voice');
+      final uri = Uri.parse('${ApiService.baseUrl}/services/clone/clone-voice');
       final request = http.MultipartRequest('POST', uri);
       request.files.add(await http.MultipartFile.fromPath('file', filePath));
 
-      final response = await request.send();
-      final body = await response.stream.bytesToString();
+      final streamedResponse = await request.send().timeout(
+        const Duration(seconds: 60),
+      );
+      final body = await streamedResponse.stream.bytesToString();
 
-      if (response.statusCode == 200) {
-        // Parse profileId from response
+      if (streamedResponse.statusCode == 200) {
+        final data = jsonDecode(body);
         setState(() {
-          _profileId = 'voice_profile_saved';
-          _statusMessage = '✅ Voice profile created successfully!';
+          _profileId = data['voice_profile_id'] ?? 'unknown';
+          _statusMessage = '✅ Voice profile created!\nID: $_profileId';
         });
       } else {
-        setState(() => _statusMessage = 'Upload failed. Try again.');
+        setState(() => _statusMessage =
+            '❌ Upload failed (${streamedResponse.statusCode}). Try again.');
       }
     } catch (e) {
-      setState(() => _statusMessage = 'Error: $e');
+      setState(() => _statusMessage = '❌ Connection error: $e');
     } finally {
       setState(() => _isUploading = false);
     }
@@ -115,13 +132,14 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen>
                     'Record or upload a clear voice sample for AI voice cloning. '
                     'Speak naturally for 10–30 seconds without background noise.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white60, fontSize: 13, height: 1.5),
+                    style: TextStyle(
+                        color: Colors.white60, fontSize: 13, height: 1.5),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
 
             // ── Mic animation ─────────────────────────────────────
             Center(
@@ -135,30 +153,67 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen>
                       shape: BoxShape.circle,
                       color: const Color(0xFF1A1A2E),
                       border: Border.all(
-                        color: const Color(0xFF7C3AED)
-                            .withOpacity(_glowAnimation.value),
+                        color: _profileId != null
+                            ? Colors.greenAccent
+                                .withValues(alpha: _glowAnimation.value)
+                            : const Color(0xFF06B6D4)
+                                .withValues(alpha: _glowAnimation.value),
                         width: 3,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF7C3AED)
-                              .withOpacity(_glowAnimation.value * 0.4),
+                          color: _profileId != null
+                              ? Colors.greenAccent
+                                  .withValues(alpha: _glowAnimation.value * 0.3)
+                              : const Color(0xFF06B6D4)
+                                  .withValues(alpha: _glowAnimation.value * 0.4),
                           blurRadius: 40,
                           spreadRadius: 5,
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.mic,
+                    child: Icon(
+                      _profileId != null ? Icons.check_circle : Icons.mic,
                       size: 72,
-                      color: Color(0xFF7C3AED),
+                      color: _profileId != null
+                          ? Colors.greenAccent
+                          : const Color(0xFF06B6D4),
                     ),
                   );
                 },
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+
+            // ── Selected file name ────────────────────────────────
+            if (_selectedFileName != null)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A2E),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFF3D2A6E)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.audio_file,
+                        color: Color(0xFF06B6D4), size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _selectedFileName!,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            const SizedBox(height: 16),
 
             // ── Status message ────────────────────────────────────
             Text(
@@ -173,14 +228,14 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen>
 
             const Spacer(),
 
-            // ── Upload button ─────────────────────────────────────
+            // ── Buttons ───────────────────────────────────────────
             if (!_isUploading) ...[
               _buildButton(
                 icon: Icons.upload_file,
-                label: 'Upload Voice Sample',
+                label: 'Pick & Upload Voice Sample',
                 onTap: _pickAndUpload,
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
+                  colors: [Color(0xFF06B6D4), Color(0xFF0891B2)],
                 ),
               ),
               const SizedBox(height: 14),
@@ -196,9 +251,9 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen>
               const Center(
                 child: Column(
                   children: [
-                    CircularProgressIndicator(color: Color(0xFF7C3AED)),
+                    CircularProgressIndicator(color: Color(0xFF06B6D4)),
                     SizedBox(height: 16),
-                    Text('Processing…',
+                    Text('Processing voice sample…',
                         style: TextStyle(color: Colors.white60)),
                   ],
                 ),
@@ -227,7 +282,7 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen>
           boxShadow: onTap != null
               ? [
                   BoxShadow(
-                    color: const Color(0xFF7C3AED).withOpacity(0.35),
+                    color: const Color(0xFF06B6D4).withValues(alpha: 0.35),
                     blurRadius: 16,
                     offset: const Offset(0, 5),
                   ),
@@ -237,7 +292,9 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: onTap != null ? Colors.white : Colors.white38, size: 20),
+            Icon(icon,
+                color: onTap != null ? Colors.white : Colors.white38,
+                size: 20),
             const SizedBox(width: 10),
             Text(
               label,

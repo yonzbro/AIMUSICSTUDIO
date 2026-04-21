@@ -16,33 +16,46 @@ services:
       - REMIX_SERVICE_URL=http://remix-service:8005
     depends_on:
       lyrics-service:
-        condition: service_healthy
+        condition: service_started
       music-service:
-        condition: service_healthy
+        condition: service_started
       voice-service:
-        condition: service_healthy
+        condition: service_started
       clone-service:
-        condition: service_healthy
+        condition: service_started
       remix-service:
-        condition: service_healthy
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     restart: unless-stopped
 
-  # ─── Lyrics Service (Qwen2 LLM) ────────────────────────────────
+  # ─── Lyrics Service (Qwen2 LLM) ── GPU ─────────────────────────
   lyrics-service:
     build: ./services/lyrics-service
     ports:
       - "8001:8001"
     volumes:
       - huggingface_cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/docs')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 30s
     restart: unless-stopped
 
-  # ─── Music Service (MusicGen) ───────────────────────────────────
+  # ─── Music Service (MusicGen) ── GPU ────────────────────────────
   music-service:
     build: ./services/music-service
     ports:
@@ -50,57 +63,79 @@ services:
     volumes:
       - shared_audio:/app/outputs
       - huggingface_cache:/root/.cache/huggingface
+    environment:
+      - OUTPUT_DIR=/app/outputs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/docs')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 120s
+      start_period: 30s
     restart: unless-stopped
 
-  # ─── Voice Service (gTTS) ───────────────────────────────────────
+  # ─── Voice Service (gTTS) ── CPU only ───────────────────────────
   voice-service:
     build: ./services/voice-service
     ports:
       - "8003:8003"
     volumes:
       - shared_audio:/app/outputs
+    environment:
+      - OUTPUT_DIR=/app/outputs
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/docs')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 15s
     restart: unless-stopped
 
-  # ─── Clone Service (Voice Profile) ─────────────────────────────
+  # ─── Clone Service (Voice Profile) ── CPU only ──────────────────
   clone-service:
     build: ./services/clone-service
     ports:
       - "8004:8004"
     volumes:
       - shared_audio:/app/outputs
+    environment:
+      - OUTPUT_DIR=/app/outputs
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/docs')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 15s
     restart: unless-stopped
 
-  # ─── Remix Service (Demucs Stem Separation) ────────────────────
+  # ─── Remix Service (Demucs) ── GPU ──────────────────────────────
   remix-service:
     build: ./services/remix-service
     ports:
       - "8005:8005"
     volumes:
       - shared_audio:/app/outputs
+    environment:
+      - OUTPUT_DIR=/app/outputs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8005/docs')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8005/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 30s
     restart: unless-stopped
 
 volumes:

@@ -7,6 +7,9 @@ _model = None
 _tokenizer = None
 MODEL_NAME = "Qwen/Qwen2-1.5B-Instruct"
 
+def is_model_loaded() -> bool:
+    return _model is not None
+
 def load_model():
     global _model, _tokenizer
     if _model is None:

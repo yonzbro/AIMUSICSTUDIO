@@ -18,12 +18,16 @@ class ModelLoader:
 
     def load(self):
         if not self._is_loaded:
-            logger.warning(f"Loading musicgen-small to {self.device}")
+            logger.warning(f"Loading musicgen-small to {self.device} (float16)")
             self.processor = AutoProcessor.from_pretrained("facebook/musicgen-small")
-            self.model = MusicgenForConditionalGeneration.from_pretrained("facebook/musicgen-small")
+            self.model = MusicgenForConditionalGeneration.from_pretrained(
+                "facebook/musicgen-small",
+                torch_dtype=torch.float16,
+                low_cpu_mem_usage=True
+            )
             self.model.to(self.device)
             self._is_loaded = True
-            logger.warning("Model loaded successfully.")
+            logger.warning("Model loaded successfully in float16.")
         return self.processor, self.model
 
 def get_model_loader():

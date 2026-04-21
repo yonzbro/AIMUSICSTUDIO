@@ -4,8 +4,8 @@ import scipy.io.wavfile
 import torch
 from model_loader import get_model_loader
 
-# Create outputs dir accessible by FastAPI
-OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "outputs")
+# In Docker, use the shared volume path; locally fallback to local outputs
+OUTPUT_DIR = os.getenv("OUTPUT_DIR", "/app/outputs")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 class MusicGenerator:
