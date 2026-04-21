@@ -108,4 +108,3 @@ Mistem, her biri belirli bir AI görevinden sorumlu olan bağımsız Docker kont
 | **Remix Service** | `8005` | [http://localhost:8005/docs](http://localhost:8005/docs) |
 
 ---
-*Created by Antigravity AI.*
