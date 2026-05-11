@@ -95,19 +95,19 @@ class _HomeScreenState extends State<HomeScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Antigravity',
+                          'Sıcumaı',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.2,
                           ),
                         ),
                         Text(
-                          'AI Music Studio',
+                          'Next-Gen AI Music Studio',
                           style: TextStyle(
                             color: Colors.white38,
-                            fontSize: 13,
+                            fontSize: 12,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -138,8 +138,8 @@ class _HomeScreenState extends State<HomeScreen>
                       end: Alignment.bottomRight,
                       colors: [
                         Color.lerp(
-                          const Color(0xFF7C3AED),
-                          const Color(0xFF4F46E5),
+                          const Color(0xFF8B5CF6),
+                          const Color(0xFF6366F1),
                           _bgController.value,
                         )!,
                         const Color(0xFF1E1B4B),
@@ -148,9 +148,9 @@ class _HomeScreenState extends State<HomeScreen>
                     boxShadow: [
                       BoxShadow(
                         color:
-                            const Color(0xFF7C3AED).withValues(alpha: 0.3),
-                        blurRadius: 30,
-                        offset: const Offset(0, 10),
+                            const Color(0xFF8B5CF6).withValues(alpha: 0.35),
+                        blurRadius: 40,
+                        offset: const Offset(0, 12),
                       ),
                     ],
                   ),
@@ -158,21 +158,21 @@ class _HomeScreenState extends State<HomeScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Create anything\nwith AI 🎶',
+                        'Future of Sound\nis here 🔊',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.w800,
-                          height: 1.2,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          height: 1.1,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      SizedBox(height: 10),
                       Text(
-                        'Generate lyrics, compose music, clone voices — all in one studio.',
+                        'Professional-grade lyrics, music generation, and high-fidelity voice cloning.',
                         style: TextStyle(
-                          color: Colors.white60,
+                          color: Colors.white70,
                           fontSize: 14,
-                          height: 1.4,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -180,61 +180,85 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 32),
 
               // ── Section Label ───────────────────────────────────
               const Text(
-                'STUDIO',
+                'STUDIO CORE',
                 style: TextStyle(
                   color: Colors.white38,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
                   letterSpacing: 2,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
               // ── Feature Cards ───────────────────────────────────
               _FeatureCard(
                 icon: Icons.auto_awesome,
-                title: 'Create Song',
-                subtitle: 'Prompt → lyrics, music & voice',
-                gradient: const [Color(0xFF7C3AED), Color(0xFF4F46E5)],
+                title: 'Create Full Song',
+                subtitle: 'Prompt → Multi-stage AI pipeline',
+                gradient: const [Color(0xFF8B5CF6), Color(0xFF6366F1)],
                 statusWidgets: _buildServiceChips(['lyrics', 'music', 'voice']),
                 onTap: () => Navigator.pushNamed(context, '/create'),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               _FeatureCard(
                 icon: Icons.transform,
-                title: 'Remix',
-                subtitle: 'Upload a song → separate stems',
-                gradient: const [Color(0xFFEC4899), Color(0xFFBE185D)],
+                title: 'Stem Remix',
+                subtitle: 'De-mix audio into separate tracks',
+                gradient: const [Color(0xFFF472B6), Color(0xFFDB2777)],
                 statusWidgets: _buildServiceChips(['remix']),
                 onTap: () => Navigator.pushNamed(context, '/remix'),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               _FeatureCard(
-                icon: Icons.mic,
-                title: 'Voice Clone',
-                subtitle: 'Upload voice sample → AI profile',
-                gradient: const [Color(0xFF06B6D4), Color(0xFF0891B2)],
+                icon: Icons.mic_external_on,
+                title: 'Voice Cloning',
+                subtitle: 'Create digital twins of any voice',
+                gradient: const [Color(0xFF22D3EE), Color(0xFF0891B2)],
                 statusWidgets: _buildServiceChips(['clone']),
                 onTap: () => Navigator.pushNamed(context, '/voice_upload'),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 36),
 
               // ── Services Section ────────────────────────────────
-              const Text(
-                'SERVICES',
-                style: TextStyle(
-                  color: Colors.white38,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 2,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'AI MICROSERVICES',
+                    style: TextStyle(
+                      color: Colors.white38,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  if (_gatewayOnline && _serviceStatus.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: () async {
+                        setState(() => _loadingStatus = true);
+                        try {
+                          await http.post(Uri.parse('${ApiService.baseUrl}/warmup'));
+                          _checkServices();
+                        } catch(_) {}
+                      },
+                      icon: const Icon(Icons.bolt, size: 16, color: Colors.amber),
+                      label: const Text(
+                        'Warmup All',
+                        style: TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.amber.withValues(alpha: 0.1),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                    ),
+                ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
 
               // Service status cards
               ..._serviceStatus.entries.map((e) => _ServiceStatusTile(

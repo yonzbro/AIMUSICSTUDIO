@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity AI Music Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --primary: #38bdf8;
+            --secondary: #818cf8;
+            --accent: #c084fc;
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(192, 132, 252, 0.05) 0%, transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--card-bg);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            border: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+            color: var(--secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
+        }
+
+        .panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        textarea, input, select {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+        }
+
+        .rvc-settings {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1.25rem;
+            border-radius: 1rem;
+            margin-top: 1rem;
+            border-left: 4px solid var(--accent);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .slider-container span {
+            min-width: 3rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--primary);
+        }
+
+        button.primary-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 1rem;
+        }
+
+        button.primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(56, 189, 248, 0.4);
+        }
+
+        button.primary-btn:active {
+            transform: translateY(0);
+        }
+
+        button.primary-btn:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* --- Right Panel: Output & Status --- */
+        .output-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .pipeline-status {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            text-align: center;
+            opacity: 0.3;
+            transition: all 0.3s;
+        }
+
+        .step.active {
+            opacity: 1;
+            color: var(--primary);
+        }
+
+        .step.done {
+            opacity: 1;
+            color: #10b981;
+        }
+
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            border: 1px solid var(--glass-border);
+        }
+
+        .step.active .step-icon {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .song-result {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .lyrics-box {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            height: 250px;
+            overflow-y: auto;
+            font-size: 1rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+        }
+
+        .audio-player {
+            width: 100%;
+            margin-top: 1.5rem;
+            filter: invert(1) hue-rotate(180deg) brightness(1.5);
+        }
+
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 10;
+            border-radius: 1.5rem;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(56, 189, 248, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">ANTIGRAVITY STUDIO</div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                System Active
+            </div>
+        </header>
+
+        <div class="main-grid">
+            <!-- Left: Settings -->
+            <div class="panel">
+                <h2><span>🎹</span> Create New Song</h2>
+                <div class="form-group">
+                    <label>What's the song about?</label>
+                    <textarea id="prompt" rows="3" placeholder="e.g. A neofuturistic city at night, rainy atmosphere..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Music Style</label>
+                    <input type="text" id="style" placeholder="e.g. Cyberpunk, Synthwave, Dark Electronic" value="Synthwave, Melodic">
+                </div>
+
+                <div class="form-group">
+                    <label>Voice Profile</label>
+                    <select id="voice-profile">
+                        <option value="">Loading profiles...</option>
+                    </select>
+                </div>
+
+                <div class="rvc-settings">
+                    <label style="color: var(--accent);">RVC High-Fidelity Settings</label>
+                    
+                    <div class="form-group" style="margin-top: 0.5rem;">
+                        <label>Pitch Shift (Semitones)</label>
+                        <div class="slider-container">
+                            <input type="range" id="rvc-pitch" min="-12" max="12" value="0">
+                            <span id="pitch-val">0</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Vocal Strength (Index Rate)</label>
+                        <div class="slider-container">
+                            <input type="range" id="rvc-index" min="0" max="1" step="0.05" value="0.75">
+                            <span id="index-val">0.75</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="primary-btn" id="generate-btn">GENERATE MASTERPIECE</button>
+            </div>
+
+            <!-- Right: Results & Monitoring -->
+            <div class="panel" style="position: relative;">
+                <div id="loading-overlay" class="loading-overlay">
+                    <div class="spinner"></div>
+                    <div id="loading-text" style="font-weight: 600; font-size: 1.1rem;">Composing...</div>
+                </div>
+
+                <h2><span>📊</span> Studio Monitor</h2>
+                
+                <div class="pipeline-status">
+                    <div class="step" id="step-lyrics">
+                        <div class="step-icon">📝</div>
+                        <div style="font-size: 0.75rem;">LYRICS</div>
+                    </div>
+                    <div class="step" id="step-music">
+                        <div class="step-icon">🎸</div>
+                        <div style="font-size: 0.75rem;">MUSIC</div>
+                    </div>
+                    <div class="step" id="step-voice">
+                        <div class="step-icon">🎙️</div>
+                        <div style="font-size: 0.75rem;">VOICE</div>
+                    </div>
+                    <div class="step" id="step-rvc">
+                        <div class="step-icon">✨</div>
+                        <div style="font-size: 0.75rem;">RVC</div>
+                    </div>
+                </div>
+
+                <div id="welcome-msg" style="margin-top: 2rem; color: var(--text-dim); text-align: center;">
+                    <p>Enter your creative vision and hit generate.</p>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">Sequential processing enabled for peak quality.</p>
+                </div>
+
+                <div id="song-result" class="song-result">
+                    <h3 id="result-title" style="margin-bottom: 0.5rem; color: var(--primary);"></h3>
+                    <p id="result-prompt" style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 1rem;"></p>
+                    
+                    <label>Lyrics</label>
+                    <div id="lyrics-display" class="lyrics-box"></div>
+
+                    <audio id="audio-player" class="audio-player" controls></audio>
+                    
+                    <a id="download-link" href="#" target="_blank" style="display: block; text-align: center; margin-top: 1rem; color: var(--secondary); text-decoration: none; font-weight: 600;">
+                        Download High-Res Master
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = ""; // Hosted on same port
+        
+        // UI Elements
+        const promptInput = document.getElementById('prompt');
+        const styleInput = document.getElementById('style');
+        const profileSelect = document.getElementById('voice-profile');
+        const pitchSlider = document.getElementById('rvc-pitch');
+        const pitchVal = document.getElementById('pitch-val');
+        const indexSlider = document.getElementById('rvc-index');
+        const indexVal = document.getElementById('index-val');
+        const generateBtn = document.getElementById('generate-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+        const songResult = document.getElementById('song-result');
+        const welcomeMsg = document.getElementById('welcome-msg');
+        
+        // Slider listeners
+        pitchSlider.oninput = () => pitchVal.innerText = pitchSlider.value;
+        indexSlider.oninput = () => indexVal.innerText = indexSlider.value;
+
+        // Fetch Voice Profiles
+        async function fetchProfiles() {
+            try {
+                const resp = await fetch(`${API_BASE}/voice-profiles`);
+                const data = await resp.json();
+                profileSelect.innerHTML = '<option value="">Default AI Voice</option>';
+                if (data.profiles && data.profiles.length > 0) {
+                    data.profiles.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.innerText = p.name || p.id;
+                        profileSelect.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error("Failed to fetch profiles", e);
+                profileSelect.innerHTML = '<option value="">Error loading profiles</option>';
+            }
+        }
+
+        // Pipeline Status Management
+        function setStep(step, status) {
+            const el = document.getElementById(`step-${step}`);
+            el.className = 'step ' + status;
+        }
+
+        async function generateSong() {
+            const prompt = promptInput.value.trim();
+            if (!prompt) return alert("Please enter a prompt!");
+
+            // UI Reset
+            welcomeMsg.style.display = 'none';
+            songResult.style.display = 'none';
+            loadingOverlay.style.display = 'flex';
+            generateBtn.disabled = true;
+            
+            document.querySelectorAll('.step').forEach(s => s.className = 'step');
+
+            try {
+                loadingText.innerText = "Enhancing Prompt...";
+                setStep('lyrics', 'active');
+
+                const payload = {
+                    prompt: prompt,
+                    style: styleInput.value,
+                    language: "tr",
+                    features: ["lyrics", "music", "voice"],
+                    enhance_prompt: true,
+                    voice_profile_id: profileSelect.value || null,
+                    use_rvc: !!profileSelect.value,
+                    rvc_pitch: parseInt(pitchSlider.value),
+                    rvc_index_rate: parseFloat(indexSlider.value)
+                };
+
+                // We monitor the progress indirectly by timing or we could use WebSockets if we had them.
+                // For now, we'll just update text based on estimated timing since the request is blocking.
+                const timeoutText = setTimeout(() => {
+                    loadingText.innerText = "Composing Music...";
+                    setStep('lyrics', 'done');
+                    setStep('music', 'active');
+                }, 15000);
+
+                const timeoutText2 = setTimeout(() => {
+                    loadingText.innerText = "Generating Vocals...";
+                    setStep('music', 'done');
+                    setStep('voice', 'active');
+                }, 80000);
+
+                if (payload.use_rvc) {
+                    setTimeout(() => {
+                        loadingText.innerText = "Applying RVC Magic...";
+                        setStep('voice', 'done');
+                        setStep('rvc', 'active');
+                    }, 110000);
+                }
+
+                const resp = await fetch(`${API_BASE}/generate-song`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                clearTimeout(timeoutText);
+                clearTimeout(timeoutText2);
+
+                const result = await resp.json();
+
+                if (result.status === 'success') {
+                    document.querySelectorAll('.step').forEach(s => s.className = 'step done');
+                    
+                    document.getElementById('result-title').innerText = result.song_title;
+                    document.getElementById('result-prompt').innerText = result.enhanced_prompt;
+                    document.getElementById('lyrics-display').innerText = result.lyrics;
+                    
+                    const audioUrl = `${API_BASE}/outputs/${result.final_song}`;
+                    const player = document.getElementById('audio-player');
+                    player.src = audioUrl;
+                    document.getElementById('download-link').href = audioUrl;
+                    
+                    songResult.style.display = 'block';
+                } else {
+                    alert("Error: " + result.message);
+                }
+            } catch (e) {
+                alert("Generation failed. Check console.");
+                console.error(e);
+            } finally {
+                loadingOverlay.style.display = 'none';
+                generateBtn.disabled = false;
+            }
+        }
+
+        generateBtn.onclick = generateSong;
+        fetchProfiles();
+    </script>
+</body>
+</html>

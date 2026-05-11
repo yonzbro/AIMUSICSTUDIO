@@ -4,7 +4,7 @@ import 'dart:convert';
 class ApiService {
   // For Windows Desktop or iOS Simulator use 'localhost'
   // For Android emulator use '10.0.2.2'
-  static const String baseUrl = 'http://10.0.2.2:8000';
+  static const String baseUrl = 'http://127.0.0.1:8000';
 
   // ── Service Status ──────────────────────────────────────────────
   static Future<Map<String, dynamic>> getServicesStatus() async {
@@ -31,11 +31,15 @@ class ApiService {
     }
   }
 
-  // ── Generate Song (parallel pipeline) ───────────────────────────
+  // ── Generate Song (sequential pipeline) ───────────────────────────
   static Future<Map<String, dynamic>?> generateSong({
     required String prompt,
     required String style,
     required List<String> features,
+    String? voiceProfileId,
+    bool useRvc = true,
+    int rvcPitch = 0,
+    double rvcIndexRate = 0.75,
   }) async {
     try {
       final resp = await http
@@ -46,9 +50,13 @@ class ApiService {
               'prompt': prompt,
               'style': style,
               'features': features,
+              'voice_profile_id': voiceProfileId,
+              'use_rvc': useRvc,
+              'rvc_pitch': rvcPitch,
+              'rvc_index_rate': rvcIndexRate,
             }),
           )
-          .timeout(const Duration(minutes: 5));
+          .timeout(const Duration(minutes: 10));
       if (resp.statusCode == 200) {
         return Map<String, dynamic>.from(jsonDecode(resp.body));
       }

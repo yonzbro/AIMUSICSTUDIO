@@ -19,6 +19,12 @@ class ModelLoader:
     def load(self):
         if not self._is_loaded:
             logger.warning(f"Loading musicgen-small to {self.device} (float16)")
+
+            # CUDA performance optimization
+            if self.device == "cuda":
+                torch.backends.cudnn.benchmark = True
+                logger.warning(f"VRAM before load: {torch.cuda.memory_allocated() / 1024**2:.1f} MB")
+
             self.processor = AutoProcessor.from_pretrained("facebook/musicgen-small")
             self.model = MusicgenForConditionalGeneration.from_pretrained(
                 "facebook/musicgen-small",
@@ -27,6 +33,9 @@ class ModelLoader:
             )
             self.model.to(self.device)
             self._is_loaded = True
+
+            if self.device == "cuda":
+                logger.warning(f"VRAM after load: {torch.cuda.memory_allocated() / 1024**2:.1f} MB")
             logger.warning("Model loaded successfully in float16.")
         return self.processor, self.model
 

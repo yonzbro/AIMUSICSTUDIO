@@ -6,16 +6,16 @@ import 'screens/voice_upload_screen.dart';
 import 'screens/remix_screen.dart';
 
 void main() {
-  runApp(const AntigravityMusicApp());
+  runApp(const SicumaiMusicApp());
 }
 
-class AntigravityMusicApp extends StatelessWidget {
-  const AntigravityMusicApp({super.key});
+class SicumaiMusicApp extends StatelessWidget {
+  const SicumaiMusicApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Antigravity AI Music Studio',
+      title: 'Sıcumaı AI Music Studio',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,

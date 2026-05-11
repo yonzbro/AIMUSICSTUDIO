@@ -14,6 +14,7 @@ services:
       - VOICE_SERVICE_URL=http://voice-service:8003
       - CLONE_SERVICE_URL=http://clone-service:8004
       - REMIX_SERVICE_URL=http://remix-service:8005
+      - RVC_SERVICE_URL=http://rvc-v3:8006
     depends_on:
       lyrics-service:
         condition: service_started
@@ -24,6 +25,8 @@ services:
       clone-service:
         condition: service_started
       remix-service:
+        condition: service_started
+      rvc-v3:
         condition: service_started
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
@@ -40,6 +43,8 @@ services:
       - "8001:8001"
     volumes:
       - huggingface_cache:/root/.cache/huggingface
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
     deploy:
       resources:
         reservations:
@@ -65,6 +70,7 @@ services:
       - huggingface_cache:/root/.cache/huggingface
     environment:
       - OUTPUT_DIR=/app/outputs
+      - NVIDIA_VISIBLE_DEVICES=all
     deploy:
       resources:
         reservations:
@@ -80,32 +86,43 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # ─── Voice Service (gTTS) ── CPU only ───────────────────────────
+  # ─── Voice Service (Coqui XTTS-v2 + Voice Cloning) ── GPU ──────
   voice-service:
     build: ./services/voice-service
     ports:
       - "8003:8003"
     volumes:
       - shared_audio:/app/outputs
+      - huggingface_cache:/root/.cache/huggingface
+      - voice_profiles:/app/voice_profiles
     environment:
       - OUTPUT_DIR=/app/outputs
+      - PROFILES_DIR=/app/voice_profiles
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
+      start_period: 120s
     restart: unless-stopped
 
-  # ─── Clone Service (Voice Profile) ── CPU only ──────────────────
+  # ─── Clone Service (Voice Profile Manager) ── CPU only ──────────
   clone-service:
     build: ./services/clone-service
     ports:
       - "8004:8004"
     volumes:
-      - shared_audio:/app/outputs
+      - voice_profiles:/app/voice_profiles
     environment:
-      - OUTPUT_DIR=/app/outputs
+      - PROFILES_DIR=/app/voice_profiles
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')"]
       interval: 30s
@@ -123,6 +140,7 @@ services:
       - shared_audio:/app/outputs
     environment:
       - OUTPUT_DIR=/app/outputs
+      - NVIDIA_VISIBLE_DEVICES=all
     deploy:
       resources:
         reservations:
@@ -137,7 +155,37 @@ services:
       retries: 3
       start_period: 30s
     restart: unless-stopped
+    
+  # ─── RVC Service (Singing Voice Conversion) ── GPU ──────────────
+  rvc-v3:
+    build: ./services/rvc-service
+    ports:
+      - "8006:8006"
+    volumes:
+      - shared_audio:/app/outputs
+      - voice_profiles:/app/voice_profiles
+      - rvc_models:/app/models/pretrained
+    environment:
+      - OUTPUT_DIR=/app/outputs
+      - PROFILES_DIR=/app/voice_profiles
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8006/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
 
 volumes:
   shared_audio:
   huggingface_cache:
+  voice_profiles:
+  rvc_models:

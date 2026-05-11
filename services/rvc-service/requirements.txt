@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+httpx
+numpy<2.0.0
+scipy
+librosa
+fairseq
+faiss-cpu
+praat-parselmouth
+tqdm
+pyworld
+pydantic
+python-multipart
+torchcrepe
+ffmpeg-python
+av

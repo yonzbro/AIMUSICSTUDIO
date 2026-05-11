@@ -1,125 +1,66 @@
-# 🎵 Antigravity AI Music Studio
+# 🔊 Sıcumaı AI Music Studio
 
-[Türkçe](#türkçe) | [English](#english)
+**Sıcumaı** is a professional-grade, multi-stage AI music generation studio. It allows users to generate full songs (lyrics + music + voice), remix existing audio into stems, and create high-fidelity digital twins of any voice via cloning.
 
----
+![Sıcumaı Dashboard](https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=1000)
 
-<div id="english">
+## 🚀 Features
 
-## 🚀 Overview
+- **Multi-Stage AI Pipeline**: One prompt to generate everything.
+  - **Lyrics**: Powered by Qwen2-1.5B (finetuned for songwriting).
+  - **Music**: Powered by Facebook MusicGen (Small/Medium).
+  - **Voice Synthesis**: Expressive TTS via Coqui XTTS-v2.
+- **High-Fidelity RVC**: Integration of Retrieval-based Voice Conversion for maximum vocal realism.
+- **Stem Separation (Remix)**: De-mix any song into Vocals, Drums, Bass, and Other tracks using Demucs.
+- **Voice Cloning**: Create a permanent digital profile from just 30 seconds of audio.
+- **GPU Accelerated**: Optimized for NVIDIA RTX GPUs (CUDA support).
 
-**Antigravity AI Music Studio** is a state-of-the-art, AI-powered music generation ecosystem. It leverages a microservices architecture to handle lyrics generation, music synthesis, voice cloning, and audio remixing, all orchestrated through a high-performance FastAPI gateway and accessible via a sleek Flutter mobile application.
+## 🛠️ Tech Stack
 
-### ✨ Latest Enhancements (v1.1)
-- **Studio Mastering**: Vocals now include professional `aecho` and `reverb` filters for a high-fidelity studio feel.
-- **Infinite Looping**: Background beats now loop seamlessly to match the duration of your lyrics.
-- **Universal MP3 Output**: All generated songs are automatically converted to high-quality MP3 for perfect compatibility with mobile players.
-- **VRAM Memory Guard**: Optimized memory management for stable performance on mid-range GPUs (e.g., RTX 4060).
+- **Frontend**: Flutter (Windows/Android/iOS support).
+- **Gateway**: FastAPI + HTTPX (Async Orchestrator).
+- **Microservices**:
+  - `lyrics-service`: Python + Transformers (Qwen2).
+  - `music-service`: Python + Audiocraft.
+  - `voice-service`: Python + Coqui TTS.
+  - `remix-service`: Python + Demucs.
+  - `clone-service`: Python + Soundfile/Librosa.
+  - `rvc-service`: Python + RVC-v3 (RMVPE).
 
-### 🏗️ Architecture
+## 📦 Installation & Setup
 
-```mermaid
-graph TD
-    App[Flutter Mobile App] --> Gateway[FastAPI Gateway :8000]
-    Gateway --> Lyrics[Lyrics Service :8001<br/>Qwen2-1.5B]
-    Gateway --> Music[Music Service :8002<br/>MusicGen-Small]
-    Gateway --> Voice[Voice Service :8003<br/>gTTS/Edge]
-    Gateway --> Clone[Clone Service :8004<br/>Voice Cloning]
-    Gateway --> Remix[Remix Service :8005<br/>Demucs Stem Separation]
-```
+### Prerequisites
+- Docker & Docker Compose
+- NVIDIA GPU with CUDA drivers installed
+- NVIDIA Container Toolkit
 
-### 🛠️ Tech Stack
-- **Backend:** Python, FastAPI, Docker, Docker Compose
-- **Mobile:** Flutter (Dart)
-- **AI Models:** 
-  - `Qwen2-1.5B-Instruct` (Lyrics)
-  - `facebook/musicgen-small` (Music)
-  - `Demucs` (Remix/Stems)
-- **GPU Acceleration:** CUDA supported via NVIDIA Container Toolkit.
-
-### 🏁 Getting Started
-
-1. **Prerequisites:**
-   - Docker Desktop (v4+) & NVIDIA Container Toolkit
-   - Flutter SDK (v3.0+)
-   - Android Emulator/Device (API 28+ recommended)
-
-2. **Run Backend:**
-   ```powershell
-   docker-compose up --build -d
+### Quick Start
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yonzbro/AIMUSICSTUDIO.git
+   cd AIMUSICSTUDIO
    ```
 
-3. **Run Mobile App:**
-   ```powershell
+2. **Launch Microservices**:
+   ```bash
+   docker-compose up -d
+   ```
+
+3. **Run the Flutter App**:
+   ```bash
    cd mobile-app
-   flutter run
+   flutter run -d windows
    ```
 
-> [!IMPORTANT]
-> **Android Configuration:** Ensure `android:usesCleartextTraffic="true"` is enabled in `AndroidManifest.xml` to allow audio streaming over HTTP.
+## 🎹 Usage
 
-</div>
+1. **Warmup**: Open the app and click **"Warmup All"** on the home screen to pre-load AI models into VRAM.
+2. **Clone**: Go to **Voice Clone**, upload a clean sample of your voice.
+3. **Create**: Go to **Create Song**, select your cloned voice profile, enable **RVC**, and describe your song.
+4. **Remix**: Upload any song to the **Remix** section to get separated instrumental tracks.
 
----
-
-<div id="türkçe">
-
-## 🚀 Genel Bakış
-
-**Antigravity AI Music Studio**, yapay zeka destekli son teknoloji bir müzik üretim ekosistemidir. Şarkı sözü yazımı, müzik sentezi, ses klonlama ve ses ayrıştırma görevlerini mikro servis mimarisiyle yönetir. Tüm süreç yüksek performanslı bir FastAPI gateway üzerinden yönetilir ve modern bir Flutter mobil uygulaması ile sunulur.
-
-### ✨ Yeni Geliştirmeler (v1.1)
-- **Stüdyo Mastering**: Vokaller artık yüksek kaliteli bir stüdyo hissi için profesyonel `aecho` ve `reverb` filtreleri içerir.
-- **Sonsuz Döngü**: Arka plan beatleri, sözlerinizin süresiyle eşleşecek şekilde kusursuzca döngüye (loop) sokulur.
-- **Evrensel MP3 Çıkışı**: Üretilen tüm şarkılar, mobil oynatıcılarla tam uyum için otomatik olarak yüksek kaliteli MP3 formatına dönüştürülür.
-- **VRAM Hafıza Koruması**: RTX 4060 gibi orta segment GPU'larda kararlı performans için optimize edilmiş bellek yönetimi.
-
-### 🏗️ Mimari Yapı
-
-Sistem, her biri belirli bir AI görevinden sorumlu olan bağımsız Docker konteynırlarından oluşur. Bu yapı, ölçeklenebilirlik ve GPU kaynaklarının verimli kullanılmasını sağlar.
-
-### 🛠️ Teknoloji Yığını
-- **Backend:** Python, FastAPI, Docker, Docker Compose
-- **Mobil:** Flutter (Dart)
-- **Yapay Zeka Modelleri:** 
-  - `Qwen2-1.5B-Instruct` (Söz Yazımı)
-  - `facebook/musicgen-small` (Müzik Üretimi)
-  - `Demucs` (Stem Ayrıştırma)
-
-### 🏁 Başlangıç
-
-1. **Gereksinimler:**
-   - Docker Desktop & NVIDIA Container Toolkit
-   - Flutter SDK (v3.0+)
-   - Android Emülatör/Cihaz (API 28+ önerilir)
-
-2. **Backend'i Başlat:**
-   ```powershell
-   docker-compose up --build -d
-   ```
-
-3. **Mobil Uygulamayı Çalıştır:**
-   ```powershell
-   cd mobile-app
-   flutter run
-   ```
-
-> [!IMPORTANT]
-> **Android Yapılandırması:** Ses akışının HTTP üzerinden sorunsuz çalışması için `AndroidManifest.xml` dosyasında `android:usesCleartextTraffic="true"` ayarının yapıldığından emin olun.
-
-</div>
+## 📄 License
+This project is for educational and creative purposes. Models used are subject to their respective licenses (CC-BY-NC, MIT, etc.).
 
 ---
-
-## 📋 Service Ports / Servis Portları
-
-| Service / Servis | Port | Documentation / Dokümantasyon |
-| :--- | :---: | :--- |
-| **Gateway** | `8000` | [http://localhost:8000/docs](http://localhost:8000/docs) |
-| **Lyrics Service** | `8001` | [http://localhost:8001/docs](http://localhost:8001/docs) |
-| **Music Service** | `8002` | [http://localhost:8002/docs](http://localhost:8002/docs) |
-| **Voice Service** | `8003` | [http://localhost:8003/docs](http://localhost:8003/docs) |
-| **Clone Service** | `8004` | [http://localhost:8004/docs](http://localhost:8004/docs) |
-| **Remix Service** | `8005` | [http://localhost:8005/docs](http://localhost:8005/docs) |
-
----
+*Created by Antigravity Team for Sıcumaı Project.*

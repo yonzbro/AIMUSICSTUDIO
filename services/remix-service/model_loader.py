@@ -1,7 +1,7 @@
 import os
+import subprocess
 import torch
 import gc
-from pathlib import Path
 
 _ready = False
 
@@ -14,37 +14,49 @@ def load_model():
     print("Remix service ready (Demucs htdemucs model will download on first request).")
 
 def split_audio(audio_path: str, output_dir: str):
-    """Split audio into stems using Demucs htdemucs model."""
+    """Split audio into stems using Demucs htdemucs model via CLI."""
     global _ready
     if not _ready:
         load_model()
 
-    from demucs.api import Separator
-    from demucs.audio import save_audio
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Splitting audio on {device}: {audio_path}")
 
-    # Instantiate locally so memory is freed after each request
-    separator = Separator("htdemucs", device=device)
+    # Use demucs CLI - most reliable across all versions
+    cmd = [
+        "python", "-m", "demucs.separate",
+        "--two-stems=vocals",
+        "-n", "htdemucs",
+        "--device", device,
+        "-o", output_dir,
+        audio_path,
+    ]
 
     try:
-        origin, separated = separator.separate_audio_file(Path(audio_path))
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        if result.returncode != 0:
+            print(f"Demucs stderr: {result.stderr}")
+            raise RuntimeError(f"Demucs failed: {result.stderr}")
 
+        # Demucs outputs to: output_dir/htdemucs/<filename>/vocals.wav, no_vocals.wav
         base_name = os.path.splitext(os.path.basename(audio_path))[0]
-        stems = []
+        stems_dir = os.path.join(output_dir, "htdemucs", base_name)
 
-        for stem_name, audio_tensor in separated.items():
-            out_file = f"{stem_name}_{base_name}.wav"
-            out_path = os.path.join(output_dir, out_file)
-            save_audio(audio_tensor, out_path, samplerate=separator.samplerate)
-            stems.append(out_file)
-            print(f"Saved stem: {out_file}")
+        stems = []
+        if os.path.isdir(stems_dir):
+            for f in os.listdir(stems_dir):
+                if f.endswith(".wav"):
+                    # Move stems to output_dir root for easy serving
+                    src = os.path.join(stems_dir, f)
+                    dst_name = f"{base_name}_{f}"
+                    dst = os.path.join(output_dir, dst_name)
+                    os.rename(src, dst)
+                    stems.append(dst_name)
+                    print(f"Saved stem: {dst_name}")
 
         return stems
 
     finally:
-        del separator
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         gc.collect()

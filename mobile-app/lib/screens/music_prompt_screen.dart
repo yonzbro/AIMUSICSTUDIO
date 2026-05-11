@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../services/api_service.dart';
 
 class MusicPromptScreen extends StatefulWidget {
@@ -52,9 +54,17 @@ class _MusicPromptScreenState extends State<MusicPromptScreen>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
+  // ── Voice profiles ────────────────────────────────────────────
+  List<dynamic> _voiceProfiles = [];
+  String? _selectedVoiceId;
+  bool _useRvc = true;
+  double _rvcPitch = 0.0;
+  double _rvcIndexRate = 0.75;
+
   @override
   void initState() {
     super.initState();
+    _fetchProfiles();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -62,6 +72,25 @@ class _MusicPromptScreenState extends State<MusicPromptScreen>
     _pulseAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+  }
+
+  Future<void> _fetchProfiles() async {
+    final data = await ApiService.getServicesStatus();
+    if (data.containsKey('clone')) {
+       // We'll get profiles from the dedicated endpoint we added
+       try {
+         final resp = await http.get(Uri.parse('${ApiService.baseUrl}/voice-profiles'));
+         if (resp.statusCode == 200) {
+           final body = jsonDecode(resp.body);
+           setState(() {
+             _voiceProfiles = body['profiles'] ?? [];
+             if (_voiceProfiles.isNotEmpty) {
+               _selectedVoiceId = _voiceProfiles.first['profile_id'];
+             }
+           });
+         }
+       } catch(_) {}
+    }
   }
 
   @override
@@ -111,6 +140,10 @@ class _MusicPromptScreenState extends State<MusicPromptScreen>
         prompt: _promptController.text,
         style: _selectedStyle,
         features: _activeFeatures,
+        voiceProfileId: _selectedVoiceId,
+        useRvc: _useRvc,
+        rvcPitch: _rvcPitch.toInt(),
+        rvcIndexRate: _rvcIndexRate,
       );
 
       if (data != null && mounted) {
@@ -365,6 +398,106 @@ class _MusicPromptScreenState extends State<MusicPromptScreen>
               }).toList(),
             ),
             const SizedBox(height: 32),
+
+            // ── Voice & RVC Settings ──────────────────────────────
+            if (_features['voice']!) ...[
+              const Text(
+                'VOICE SETTINGS',
+                style: TextStyle(
+                  color: Colors.white38,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A2E),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF2D2D4E)),
+                ),
+                child: Column(
+                  children: [
+                    // Voice Profile Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedVoiceId,
+                      dropdownColor: const Color(0xFF1A1A2E),
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelText: 'Select Voice',
+                        labelStyle: TextStyle(color: Colors.white30),
+                        enabledBorder: InputBorder.none,
+                      ),
+                      items: [
+                        const DropdownMenuItem(
+                            value: null, child: Text('Default AI Voice')),
+                        ..._voiceProfiles.map((p) => DropdownMenuItem(
+                              value: p['profile_id'] as String,
+                              child: Text(p['profile_id'] as String),
+                            )),
+                      ],
+                      onChanged: (val) => setState(() => _selectedVoiceId = val),
+                    ),
+                    const Divider(color: Colors.white10),
+                    // RVC Toggle
+                    SwitchListTile(
+                      title: const Text('High-Fidelity RVC',
+                          style: TextStyle(color: Colors.white, fontSize: 14)),
+                      subtitle: const Text('Uses neural conversion for maximum realism',
+                          style: TextStyle(color: Colors.white30, fontSize: 11)),
+                      value: _useRvc,
+                      activeColor: const Color(0xFF7C3AED),
+                      onChanged: (val) => setState(() => _useRvc = val),
+                    ),
+                    if (_useRvc) ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          const Text('Pitch',
+                              style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          Expanded(
+                            child: Slider(
+                              value: _rvcPitch,
+                              min: -12,
+                              max: 12,
+                              divisions: 24,
+                              label: _rvcPitch.toInt().toString(),
+                              activeColor: const Color(0xFF7C3AED),
+                              onChanged: (val) => setState(() => _rvcPitch = val),
+                            ),
+                          ),
+                          Text('${_rvcPitch.toInt()}',
+                              style: const TextStyle(color: Colors.white)),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          const Text('Strength',
+                              style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          Expanded(
+                            child: Slider(
+                              value: _rvcIndexRate,
+                              min: 0.0,
+                              max: 1.0,
+                              divisions: 10,
+                              label: _rvcIndexRate.toStringAsFixed(1),
+                              activeColor: const Color(0xFF7C3AED),
+                              onChanged: (val) =>
+                                  setState(() => _rvcIndexRate = val),
+                            ),
+                          ),
+                          Text(_rvcIndexRate.toStringAsFixed(1),
+                              style: const TextStyle(color: Colors.white)),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
 
             // ── Generate button ───────────────────────────────────
             AnimatedContainer(
