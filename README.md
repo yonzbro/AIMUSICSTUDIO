@@ -1,6 +1,6 @@
 # 🔊 Sıcumaı AI Music Studio
 
-**Sıcumaı**, yapay zeka destekli, çok aşamalı (multi-stage) bir müzik üretim ve ses işleme platformudur. Bu proje, modern derin öğrenme modellerini mikroservis mimarisiyle birleştirerek uçtan uca bir prodüksiyon deneyimi sunar.
+**Sıcumaı**, yapay zeka destekli, çok aşamalı (multi-stage) bir müzik üretim ve ses işleme platformudur. Bu proje, modern derin öğrenme modellerini mikroservis mimarisiyle birleştirerek uçtan uca bir prodüksiyon deneyimi sunmayı hedeflemektedir.
 
 ---
 
