@@ -1,66 +1,110 @@
 # 🔊 Sıcumaı AI Music Studio
 
-**Sıcumaı** is a professional-grade, multi-stage AI music generation studio. It allows users to generate full songs (lyrics + music + voice), remix existing audio into stems, and create high-fidelity digital twins of any voice via cloning.
+**Sıcumaı**, yapay zeka destekli, çok aşamalı (multi-stage) bir müzik üretim ve ses işleme platformudur. Bu proje, modern derin öğrenme modellerini mikroservis mimarisiyle birleştirerek uçtan uca bir prodüksiyon deneyimi sunar.
 
-![Sıcumaı Dashboard](https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=1000)
+---
 
-## 🚀 Features
+## 🏛️ Sistem Mimarisi (Architecture)
 
-- **Multi-Stage AI Pipeline**: One prompt to generate everything.
-  - **Lyrics**: Powered by Qwen2-1.5B (finetuned for songwriting).
-  - **Music**: Powered by Facebook MusicGen (Small/Medium).
-  - **Voice Synthesis**: Expressive TTS via Coqui XTTS-v2.
-- **High-Fidelity RVC**: Integration of Retrieval-based Voice Conversion for maximum vocal realism.
-- **Stem Separation (Remix)**: De-mix any song into Vocals, Drums, Bass, and Other tracks using Demucs.
-- **Voice Cloning**: Create a permanent digital profile from just 30 seconds of audio.
-- **GPU Accelerated**: Optimized for NVIDIA RTX GPUs (CUDA support).
+Proje, yüksek ölçeklenebilirlik ve model izolasyonu için mikroservis tabanlı bir yapıya sahiptir. Tüm bileşenler Docker konteynerleri içinde asenkron olarak haberleşir.
 
-## 🛠️ Tech Stack
+```mermaid
+graph TD
+    User((Kullanıcı/Flutter App)) --> Gateway[API Gateway - FastAPI]
+    
+    subgraph AI Microservices
+        Gateway --> Lyrics[Lyrics Service - Qwen2]
+        Gateway --> Music[Music Service - MusicGen]
+        Gateway --> Voice[Voice Service - XTTS-v2]
+        Gateway --> RVC[RVC Service - RVC v3]
+        Gateway --> Remix[Remix Service - Demucs]
+        Gateway --> Clone[Clone Service - Voice Profiler]
+    end
+    
+    subgraph Data Flow
+        Lyrics -- "Sözler" --> Voice
+        Music -- "Melodi" --> Gateway
+        Voice -- "Vokal" --> RVC
+        RVC -- "Final Vokal" --> Gateway
+        Gateway -- "FFmpeg Merge" --> Output[Final MP3/WAV]
+    end
+    
+    SharedVolume[(Shared Audio Volume)]
+    Lyrics -.-> SharedVolume
+    Music -.-> SharedVolume
+    Voice -.-> SharedVolume
+    RVC -.-> SharedVolume
+```
 
-- **Frontend**: Flutter (Windows/Android/iOS support).
-- **Gateway**: FastAPI + HTTPX (Async Orchestrator).
-- **Microservices**:
-  - `lyrics-service`: Python + Transformers (Qwen2).
-  - `music-service`: Python + Audiocraft.
-  - `voice-service`: Python + Coqui TTS.
-  - `remix-service`: Python + Demucs.
-  - `clone-service`: Python + Soundfile/Librosa.
-  - `rvc-service`: Python + RVC-v3 (RMVPE).
+---
 
-## 📦 Installation & Setup
+## 🚀 Temel Özellikler (Key Features)
 
-### Prerequisites
-- Docker & Docker Compose
-- NVIDIA GPU with CUDA drivers installed
-- NVIDIA Container Toolkit
+### 1. Çok Aşamalı AI Pipeline (Full Production)
+Tek bir prompt ile söz yazımı, beste ve vokal sentezleme işlemlerini ardışık olarak gerçekleştirir.
+*   **Lyrics Engine:** Qwen2-1.5B Instruct modeli kullanılarak profesyonel şarkı sözü yazımı.
+*   **Music Composition:** Facebook MusicGen modelleriyle (Small/Medium) yüksek kaliteli enstrümantal beste.
+*   **Vocal Synthesis:** Coqui XTTS-v2 ile 17 dilde duygusal vokal üretimi.
 
-### Quick Start
-1. **Clone the repository**:
+### 2. High-Fidelity RVC (Vocal Transformation)
+Üretilen vokalleri, **Retrieval-based Voice Conversion (RVC v3)** kullanarak gerçek insan sesine dönüştürür. RMVPE (Retrieval-based Mixed-vocal Pre-trained Encoder) algoritması ile sıfır artefakt garantisi sunar.
+
+### 3. Ses Klonlama (Voice Cloning)
+Sadece 30 saniyelik bir ses örneği ile kalıcı dijital ses profilleri oluşturur. Bu profiller hem XTTS hem de RVC aşamalarında kullanılabilir.
+
+### 4. Stem Separation (Remix Modülü)
+**Demucs v4 (htdemucs)** kullanarak herhangi bir şarkıyı Vokal, Davul, Bas ve Diğer enstrümanlar olarak 4 ayrı kanala ayırır.
+
+---
+
+## 🛠️ Teknik Detaylar (Technical Stack)
+
+| Bileşen | Teknoloji | Görev |
+| :--- | :--- | :--- |
+| **Frontend** | Flutter | Windows Desktop Arayüzü |
+| **Gateway** | FastAPI + HTTPX | Servis Orkestrasyonu & Dosya Yönetimi |
+| **Lyrics** | Transformers (Qwen2) | Metin Üretimi |
+| **Music** | Audiocraft (MusicGen) | Ses Sentezleme (Diffusion) |
+| **Voice** | Coqui TTS (XTTS-v2) | Vokal Sentezleme |
+| **RVC** | RVC-v3 + CUDA | Ses Dönüştürme |
+| **Remix** | Facebook Demucs | Stem Ayrıştırma |
+| **Backend** | Python 3.10+ | Mikroservis Altyapısı |
+
+---
+
+## 📦 Kurulum ve Çalıştırma (Installation)
+
+### Gereksinimler
+*   Docker & Docker Compose
+*   NVIDIA GPU (Minimum 8GB VRAM önerilir)
+*   NVIDIA Container Toolkit
+
+### Hızlı Başlat
+1. **Depoyu klonlayın:**
    ```bash
    git clone https://github.com/yonzbro/AIMUSICSTUDIO.git
    cd AIMUSICSTUDIO
    ```
 
-2. **Launch Microservices**:
+2. **Mikroservisleri ayağa kaldırın:**
    ```bash
    docker-compose up -d
    ```
 
-3. **Run the Flutter App**:
+3. **Flutter Uygulamasını Çalıştırın:**
    ```bash
    cd mobile-app
    flutter run -d windows
    ```
 
-## 🎹 Usage
+---
 
-1. **Warmup**: Open the app and click **"Warmup All"** on the home screen to pre-load AI models into VRAM.
-2. **Clone**: Go to **Voice Clone**, upload a clean sample of your voice.
-3. **Create**: Go to **Create Song**, select your cloned voice profile, enable **RVC**, and describe your song.
-4. **Remix**: Upload any song to the **Remix** section to get separated instrumental tracks.
+## 📝 Mühendislik Yaklaşımı ve AI Kullanımı
 
-## 📄 License
-This project is for educational and creative purposes. Models used are subject to their respective licenses (CC-BY-NC, MIT, etc.).
+Bu proje geliştirilirken "AI-Assisted Development" (Yapay Zeka Destekli Geliştirme) metodolojisi izlenmiştir. 
+*   **Model Optimizasyonu:** VRAM kullanımını optimize etmek için Float16 hassasiyeti ve dinamik bellek boşaltma (CUDA cache clearing) yöntemleri uygulanmıştır.
+*   **Hata Yönetimi:** Mikroservisler arasındaki bağlantı kopmalarına karşı "Health Check" ve asenkron "Retry" mekanizmaları Gateway seviyesinde kurgulanmıştır.
+*   **Modülerlik:** Her servis kendi bağımsız ortamında (Docker) çalıştığı için modeller arası kütüphane çakışmaları önlenmiştir.
 
 ---
-*Created by Antigravity Team for Sıcumaı Project.*
+*Bu proje, Yapay Zeka Destekli Yazılım Geliştirme dersi kapsamında **Sıcumaı Projesi** olarak geliştirilmiştir.*
