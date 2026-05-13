@@ -1,6 +1,6 @@
 # 🔊 Sıcumaı AI Music Studio — Next-Gen AI Orchestration
 
-**Sıcumaı**, modern derin öğrenme (Deep Learning) modellerini tek bir çatı altında toplayan, çok aşamalı (**multi-stage**) ve tamamen otonom bir müzik üretim ve ses mühendisliği stüdyosudur. Bu proje, metin tabanlı fikirleri şarkı sözlerine, bestelere, vokallere dönüştürür ve profesyonel stüdyo miksajı yaparak eksiksiz bir şarkı çıktısı sunar.
+**SıcumAI**, modern derin öğrenme (Deep Learning) modellerini tek bir çatı altında toplayan, çok aşamalı (**multi-stage**) ve tamamen otonom bir müzik üretim ve ses mühendisliği stüdyosudur. Bu proje, metin tabanlı fikirleri şarkı sözlerine, bestelere, vokallere dönüştürür ve profesyonel stüdyo miksajı yaparak eksiksiz bir şarkı çıktısı sunar.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-green.svg)](https://www.python.org/)
