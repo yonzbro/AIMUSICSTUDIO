@@ -79,7 +79,7 @@ Projenin Flutter ile geliştirilmiş premium, modern karanlık tema (Dark Mode) 
   </tr>
 </table>
 
-> 💡 *Not: Kendi ekran görüntülerinizi `docs/screenshots/` klasörüne yukarıdaki isimlerle kaydederek bu bölümü aktifleştirebilirsiniz.*
+> 
 
 ---
 
