@@ -151,4 +151,4 @@ Modeller arası devasa ses dosyası transferlerinin ağ üzerinden geçmesi yeri
     ```
 
 ---
-*Bu proje, Yapay Zeka Destekli Yazılım Geliştirme dersi kapsamında **Sıcumaı Projesi** olarak hazırlanmış ve tüm süreç yapay zeka destekli kodlama metodolojileriyle geliştirilmiştir.*
+
