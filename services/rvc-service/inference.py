@@ -54,8 +54,8 @@ def rvc_infer(
         index_rate=index_rate,
         filter_radius=3,
         resample_sr=0, # no resampling
-        rms_mix_rate=0.25,
-        protect=0.33
+        rms_mix_rate=0.30,
+        protect=0.50
     )
     
     if audio_data is not None:

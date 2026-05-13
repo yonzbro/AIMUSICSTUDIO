@@ -33,7 +33,7 @@ def split_audio(audio_path: str, output_dir: str):
     ]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
         if result.returncode != 0:
             print(f"Demucs stderr: {result.stderr}")
             raise RuntimeError(f"Demucs failed: {result.stderr}")

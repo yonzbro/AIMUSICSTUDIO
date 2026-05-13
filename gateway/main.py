@@ -177,9 +177,15 @@ async def clone_voice_proxy(file: UploadFile = File(...)):
                 f"{SERVICES['clone']}/clone-voice",
                 files={"file": (file.filename, contents, file.content_type or "audio/wav")},
             )
+            
+            if resp.status_code != 200:
+                from fastapi.responses import JSONResponse
+                return JSONResponse(status_code=resp.status_code, content=resp.json())
+                
             return resp.json()
         except Exception as e:
-            return {"error": str(e)}
+            from fastapi import HTTPException
+            raise HTTPException(status_code=500, detail=str(e))
 
 # ── FFmpeg Merge (async) ─────────────────────────────────────────
 async def _merge_audio(

@@ -9,7 +9,9 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install PyTorch with CUDA first, then remaining deps (torchcodec needs standard PyPI)
+RUN pip install --no-cache-dir torch>=2.0.0 torchaudio>=2.0.0 --extra-index-url https://download.pytorch.org/whl/cu121 \
+    && pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
